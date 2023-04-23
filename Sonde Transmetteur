@@ -1,1 +1,125 @@
 
+//        Esp01 ExtTempSonde
+//        V01-M00     version Delay Time
+//        V02-MOO     passage en TimeSleep
+
+
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+         #define SEALEVELPRESSURE_HPA (1013.25)
+         Adafruit_BME280 bme;
+   float Temperature;
+   float Humidite;
+     int Pression;
+
+#include <ESP8266WiFi.h>
+#include <espnow.h>
+  uint8_t broadcastAddress[] = {0x48, 0x55, 0x19, 0x15, 0xC7, 0x8C};
+  typedef struct message {
+          String dataIdModule = "extBme280";
+           float dataTemp;
+           float dataHumid;
+             int dataPression;
+          }; 
+          struct message DataSend;
+     bool etatSend;
+/*
+  // version Delay Time     
+     unsigned long delayTime = (5*60)*1000;// pour Time 5mn en millisecondes
+//unsigned long delayTime = (30)*1000;// pour Time 30s en millisecondes
+     unsigned long currentTime = 0;
+     unsigned long previousTime = delayTime;
+*/
+
+//   version Time Seep
+     int countSend = 0;
+//     unsigned long timeSleep = (120*60)*1000000;// pour 1 heure en microsecondes
+     unsigned long timeSleep = (1*60)*1000000;// pour 1 minute en microsecondes
+
+
+void OnDataSend (uint8_t *mac_addr, uint8_t sendStatus) {
+  
+     Serial.print("\r\nLast Packet Send Status: ");
+     if (sendStatus == 0){
+        Serial.println("Delivery success");
+        etatSend = true;
+     }
+     else{
+         Serial.println("Delivery fail");
+         etatSend = false;
+     }
+     
+}
+
+
+void setup() {
+  
+     Serial.begin(115200); Serial.println("\r\n");
+     Serial.println("Serial port initialise !");
+
+     Wire.begin();
+     Wire.pins(0, 2);//  SDA et SCL pin
+     bme.begin(0x76);
+
+     WiFi.mode(WIFI_STA);
+     WiFi.disconnect();
+
+     if (esp_now_init() != 0) {
+        Serial.println("Erreur initialisation ESP-NOW !!!");
+       return;
+     } else { Serial.println("ESP-NOW initialise !"); }
+
+     esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+     esp_now_register_send_cb(OnDataSend);
+     esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
+  
+}
+
+
+void loop() {
+
+/*//   Version Delay Time
+     currentTime = millis();
+     if ((currentTime - previousTime) > delayTime) {
+        previousTime = currentTime; Serial.println("Cycle GY21 datas");
+
+        Temperature = bme.readTemperature(); delay(50);
+        Humidite = bme.readHumidity(); delay(50);
+        Pression = bme.readPressure(); delay(50);
+
+        DataSend.dataIdModule;
+        DataSend.dataTemp = Temperature;
+        DataSend.dataHumid = Humidite;
+        DataSend.dataPression = Pression/100;
+        esp_now_send(0, (uint8_t *) &DataSend, sizeof(DataSend));
+        
+        }
+*/
+//   Version Time Sleep
+     if (etatSend == false && countSend < 10) {
+        Temperature = bme.readTemperature(); delay(50);
+        Humidite = bme.readHumidity(); delay(50);
+        Pression = bme.readPressure(); delay(50);
+
+        DataSend.dataIdModule;
+        DataSend.dataTemp = Temperature;
+        DataSend.dataHumid = Humidite;
+        DataSend.dataPression = Pression/100;
+
+         Serial.print ("Envoi data tentative: "); Serial.println (countSend);    
+         esp_now_send(0, (uint8_t *) &DataSend, sizeof(DataSend));
+         delay (100);
+         if (etatSend == true) {
+            Serial.println ("Envoi réussi !");
+            countSend = 10;
+         } else {
+            Serial.println ("Erreur envoi !");
+            countSend ++;
+         }
+     }
+     if (etatSend == true || countSend == 10) {
+        countSend = 0; etatSend = false; delay(3000);
+        ESP.deepSleep(timeSleep);
+        }
+
+}
