@@ -27,8 +27,8 @@
 #include <WiFi.h>
 #include <WiFiMulti.h>
 #include <WiFiUdp.h>
-    const char *ssid     = "Bbox-Lux";
-    const char *password = "2427242711";
+    const char *ssid     = "@@@@@@@@@@";
+    const char *password = "@@@@@@@@@@";
           WiFiMulti WiFiMulti; 
       int TryNum = 0;
 
@@ -50,7 +50,7 @@ const int   daylightOffset_sec = 3600 * 0;
           
 //____________________________________________________________________________      
 #include <OpenWeatherOneCall.h>
-#define   ONECALLKEY "75779ae0cf6ebb8e370752f4943d709d"
+#define   ONECALLKEY "#########################"
 //    float myLATITUDE = 48.4769;//   ICHTRATZHEIM
     float myLATITUDE = 48.489901;//   FEGERSHEIM
 //    float myLONGITUDE = 7.67806;//  ICHTRATZHEIM
